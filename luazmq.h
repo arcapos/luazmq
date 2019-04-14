@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
+ * Copyright (c) 2014 - 2019 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,5 @@
 
 #define ZMQ_CTX_METATABLE	"0MQ context"
 #define ZMQ_SOCKET_METATABLE	"0MQ socket"
-
-struct int_constant {
-	char *name;
-	int value;
-};
-
-extern struct int_constant zmq_int[];
-
-extern size_t num_zmq_int(void);
 
 #endif /* __ZMQ_H__ */

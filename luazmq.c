@@ -219,10 +219,14 @@ luazmq_version(lua_State *L)
 {
 	int major, minor, patch;
 	zmq_version(&major, &minor, &patch);
+	lua_newtable(L);
 	lua_pushinteger(L, major);
+	lua_setfield(L, -2, "major");
 	lua_pushinteger(L, minor);
+	lua_setfield(L, -2, "minor");
 	lua_pushinteger(L, patch);
-	return 3;
+	lua_setfield(L, -2, "patch");
+	return 1;
 }
 
 static int
@@ -530,6 +534,15 @@ luazmq_getsockopt(lua_State *L)
 	return 1;
 }
 
+static int msg_recv_flags[] = {
+	ZMQ_DONTWAIT
+};
+
+static const char *msg_recv_options[] = {
+	"dontwait",
+	NULL
+};
+
 static int
 luazmq_msg_recv(lua_State *L)
 {
@@ -540,7 +553,8 @@ luazmq_msg_recv(lua_State *L)
 	char *buf;
 
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
-	flags = lua_gettop(L) == 2 ? lua_tointeger(L, 2) : 0;
+	flags = lua_gettop(L) == 2 ?
+	    msg_recv_flags[luaL_checkoption(L, 2, NULL, msg_recv_options)] : 0;
 
 	if (zmq_msg_init(&msg))
 		return luaL_error(L, "zmq_msg_init failed");
@@ -556,12 +570,22 @@ luazmq_msg_recv(lua_State *L)
 	buf = malloc(len + 1);
 	memcpy(buf, zmq_msg_data(&msg), len);
 	buf[len] = '\0';
-	lua_pushstring(L, buf);
-	lua_pushnumber(L, len);
+	lua_pushlstring(L, buf, len);
 	free(buf);
 	zmq_msg_close(&msg);
-	return 2;
+	return 1;
 }
+
+static int msg_send_flags[] = {
+	ZMQ_DONTWAIT,
+	ZMQ_SNDMORE
+};
+
+static const char *msg_send_options[] = {
+	"dontwait",
+	"sndmore",
+	NULL
+};
 
 static int
 luazmq_msg_send(lua_State *L)
@@ -569,13 +593,15 @@ luazmq_msg_send(lua_State *L)
 	zmq_msg_t msg;
 	void **sock;
 	size_t len;
-	int flags;
+	int n, flags;
 	const char *buf;
 
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
-	flags = lua_gettop(L) == 3 ? lua_tointeger(L, 3) : 0;
-
 	buf = luaL_checklstring(L, 2, &len);
+
+	for (flags = 0, n = 3; n <= lua_gettop(L); n++)
+		flags |= msg_send_flags[luaL_checkoption(L, n, NULL,
+		    msg_send_options)];
 
 	if (zmq_msg_init_size(&msg, len))
 		return luaL_error(L, "zmq_msg_init failed");
@@ -594,18 +620,17 @@ luazmq_recv(lua_State *L)
 	char *buf;
 	size_t len;
 
-
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
 	len = luaL_checkinteger(L, 2);
-	flags = lua_gettop(L) == 3 ? lua_tointeger(L, 3) : 0;
+	flags = lua_gettop(L) == 3 ?
+	     msg_recv_flags[luaL_checkoption(L, 3, NULL, msg_recv_options)] : 0;
 	buf = malloc(len + 1);
 	nbytes = zmq_recv(*sock, buf, len, flags);
 	buf[len] = '\0';
 	buf[nbytes] = '\0';
-	lua_pushstring(L, buf);
-	lua_pushinteger(L, nbytes);
+	lua_pushlstring(L, buf, nbytes);
 	free(buf);
-	return 2;
+	return 1;
 }
 
 static int
@@ -613,12 +638,16 @@ luazmq_send(lua_State *L)
 {
 	void **sock;
 	size_t len;
-	int nbytes, flags;
+	int n, nbytes, flags;
 	const char *buf;
 
-	flags = lua_gettop(L) == 3 ? lua_tointeger(L, 3) : 0;
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
 	buf = lua_tolstring(L, 2, &len);
+
+	for (flags = 0, n = 3; n <= lua_gettop(L); n++)
+		flags |= msg_send_flags[luaL_checkoption(L, n, NULL,
+		    msg_send_options)];
+
 	nbytes = zmq_send(*sock, buf, len, flags);
 	lua_pushinteger(L, nbytes);
 	return 1;
@@ -889,21 +918,6 @@ luazmq_unbind(lua_State *L)
 	return 1;
 }
 
-static void
-luazmq_set_info(lua_State *L)
-{
-	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2014 - 2019 by "
-	    "micro systems marc balmer");
-	lua_settable(L, -3);
-	lua_pushliteral(L, "_DESCRIPTION");
-	lua_pushliteral(L, "0MQ for Lua");
-	lua_settable(L, -3);
-	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "zmq 1.1.0");
-	lua_settable(L, -3);
-}
-
 int
 luaopen_zmq(lua_State *L)
 {
@@ -972,10 +986,15 @@ luaopen_zmq(lua_State *L)
 	}
 	lua_pop(L, 1);
 
-        for (n = 0; n < num_zmq_int(); n++) {
-                lua_pushinteger(L, zmq_int[n].value);
-                lua_setfield(L, -2, zmq_int[n].name);
-        };
-        luazmq_set_info(L);
+	lua_pushliteral(L, "_COPYRIGHT");
+	lua_pushliteral(L, "Copyright (C) 2014 - 2019 by "
+	    "micro systems marc balmer");
+	lua_settable(L, -3);
+	lua_pushliteral(L, "_DESCRIPTION");
+	lua_pushliteral(L, "0MQ for Lua");
+	lua_settable(L, -3);
+	lua_pushliteral(L, "_VERSION");
+	lua_pushliteral(L, "zmq 1.2.0");
+	lua_settable(L, -3);
 	return 1;
 }
