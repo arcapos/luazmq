@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
+ * Copyright (c) 2014 - 2019 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,79 +34,12 @@
 #define ZMQ(NAME)		{ #NAME, ZMQ_##NAME }
 
 struct int_constant zmq_int[] = {
-	/* Socket types */
-	ZMQ(PAIR),
-	ZMQ(PUB),
-	ZMQ(SUB),
-	ZMQ(REQ),
-	ZMQ(REP),
-	ZMQ(DEALER),
-	ZMQ(ROUTER),
-	ZMQ(PULL),
-	ZMQ(PUSH),
-	ZMQ(XPUB),
-	ZMQ(XSUB),
-	ZMQ(STREAM),
-
-	/* Socket options */
-	ZMQ(AFFINITY),
-	ZMQ(IDENTITY),
-	ZMQ(SUBSCRIBE),
-	ZMQ(UNSUBSCRIBE),
-	ZMQ(RATE),
-	ZMQ(RECOVERY_IVL),
-	ZMQ(SNDBUF),
-	ZMQ(RCVBUF),
-	ZMQ(RCVMORE),
-	ZMQ(FD),
-	ZMQ(EVENTS),
-	ZMQ(TYPE),
-	ZMQ(LINGER),
-	ZMQ(RECONNECT_IVL),
-	ZMQ(BACKLOG),
-	ZMQ(RECONNECT_IVL_MAX),
-	ZMQ(MAXMSGSIZE),
-	ZMQ(SNDHWM),
-	ZMQ(RCVHWM),
-	ZMQ(MULTICAST_HOPS),
-	ZMQ(RCVTIMEO),
-	ZMQ(SNDTIMEO),
-	ZMQ(LAST_ENDPOINT),
-	ZMQ(ROUTER_MANDATORY),
-	ZMQ(TCP_KEEPALIVE),
-	ZMQ(TCP_KEEPALIVE_CNT),
-	ZMQ(TCP_KEEPALIVE_IDLE),
-	ZMQ(TCP_KEEPALIVE_INTVL),
-	ZMQ(TCP_ACCEPT_FILTER),
-	ZMQ(IMMEDIATE),
-	ZMQ(XPUB_VERBOSE),
-	ZMQ(ROUTER_RAW),
-	ZMQ(IPV6),
-	ZMQ(MECHANISM),
-	ZMQ(PLAIN_SERVER),
-	ZMQ(PLAIN_USERNAME),
-	ZMQ(PLAIN_PASSWORD),
-	ZMQ(CURVE_SERVER),
-	ZMQ(CURVE_PUBLICKEY),
-	ZMQ(CURVE_SECRETKEY),
-	ZMQ(CURVE_SERVERKEY),
-	ZMQ(PROBE_ROUTER),
-	ZMQ(REQ_CORRELATE),
-	ZMQ(REQ_RELAXED),
-	ZMQ(CONFLATE),
-	ZMQ(ZAP_DOMAIN),
-
 	/* Message options */
 	ZMQ(MORE),
 
 	/* Send/recv options */
 	ZMQ(DONTWAIT),
 	ZMQ(SNDMORE),
-
-	/* Security mechanisms */
-	ZMQ(NULL),
-	ZMQ(PLAIN),
-	ZMQ(CURVE),
 
 	/* Socket transport events (tcp and ipc only) */
 	ZMQ(EVENT_CONNECTED),
