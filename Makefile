@@ -1,4 +1,4 @@
-SRCS=		luazmq.c constants.c
+SRCS=		luazmq.c
 LIB=		zmq
 
 OS!=		uname
