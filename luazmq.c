@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
+ * Copyright (c) 2014 - 2019 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <zmq.h>
-#include <zmq_utils.h>
 
 #include "luazmq.h"
 
@@ -397,14 +396,14 @@ static void
 luazmq_set_info(lua_State *L)
 {
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2014, 2015 by "
+	lua_pushliteral(L, "Copyright (C) 2014 - 2019 by "
 	    "micro systems marc balmer");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "0MQ for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "zmq 1.0.4");
+	lua_pushliteral(L, "zmq 1.0.5");
 	lua_settable(L, -3);
 }
 
@@ -444,17 +443,9 @@ luaopen_zmq(lua_State *L)
 	};
 	int n;
 
-#if LUA_VERSION_NUM >= 502
 	luaL_newlib(L, functions);
-#else
-	luaL_register(L, "zmq", functions);
-#endif
 	if (luaL_newmetatable(L, ZMQ_CTX_METATABLE)) {
-#if LUA_VERSION_NUM >= 502
 		luaL_setfuncs(L, ctx_methods, 0);
-#else
-		luaL_register(L, NULL, ctx_methods);
-#endif
 		lua_pushliteral(L, "__gc");
 		lua_pushcfunction(L, luazmq_ctx_term);
 		lua_settable(L, -3);
@@ -470,11 +461,7 @@ luaopen_zmq(lua_State *L)
 	lua_pop(L, 1);
 
 	if (luaL_newmetatable(L, ZMQ_SOCKET_METATABLE)) {
-#if LUA_VERSION_NUM >= 502
 		luaL_setfuncs(L, socket_methods, 0);
-#else
-		luaL_register(L, NULL, socket_methods);
-#endif
 		lua_pushliteral(L, "__gc");
 		lua_pushcfunction(L, luazmq_close);
 		lua_settable(L, -3);
