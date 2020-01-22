@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
+ * Copyright (c) 2014 - 2020 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -312,6 +312,7 @@ luazmq_connect(lua_State *L)
 static int getsockopt_option_names[] = {
 	ZMQ_AFFINITY,
 	ZMQ_BACKLOG,
+	ZMQ_BINDTODEVICE,
 	ZMQ_CONNECT_TIMEOUT,
 	ZMQ_CURVE_PUBLICKEY,
 	ZMQ_CURVE_SECRETKEY,
@@ -322,6 +323,8 @@ static int getsockopt_option_names[] = {
 	ZMQ_GSSAPI_PRINCIPAL,
 	ZMQ_GSSAPI_SERVER,
 	ZMQ_GSSAPI_SERVICE_PRINCIPAL,
+	ZMQ_GSSAPI_SERVICE_PRINCIPAL_NAMETYPE,
+	ZMQ_GSSAPI_PRINCIPAL_NAMETYPE,
 	ZMQ_HANDSHAKE_IVL,
 	ZMQ_IDENTITY,
 	ZMQ_IMMEDIATE,
@@ -368,6 +371,7 @@ static int getsockopt_option_names[] = {
 static const char *getsockopt_options[] = {
 	"affinity",
 	"backlog",
+	"bindtodevice",
 	"connect-timeout",
 	"curve-publickey",
 	"curve-secretkey",
@@ -378,6 +382,8 @@ static const char *getsockopt_options[] = {
 	"gssapi-principal",
 	"gssapi-server",
 	"gssapi-service-principal",
+	"gssapi-service-principal-nametype",
+	"gssapi-principal-nametype",
 	"handshake-ivl",
 	"identity",
 	"immediate",
@@ -390,7 +396,7 @@ static const char *getsockopt_options[] = {
 	"mechanism",
 	"multicast-hops",
 	"multicast-maxtpdu",
-	"plain-password", 
+	"plain-password",
 	"plain-server",
 	"plain-username",
 	"use-fd",
@@ -441,6 +447,8 @@ luazmq_getsockopt(lua_State *L)
 
 	switch (option_name) {
 	/* options returning boolean */
+	case ZMQ_GSSAPI_PLAINTEXT:
+	case ZMQ_GSSAPI_SERVER:
 	case ZMQ_IMMEDIATE:
 	case ZMQ_IPV4ONLY:
 	case ZMQ_IPV6:
@@ -451,10 +459,7 @@ luazmq_getsockopt(lua_State *L)
 	/* options returning int */
 	case ZMQ_BACKLOG:
 	case ZMQ_CONNECT_TIMEOUT:
-	case ZMQ_EVENTS:
 	case ZMQ_FD:
-	case ZMQ_GSSAPI_PLAINTEXT:
-	case ZMQ_GSSAPI_SERVER:
 	case ZMQ_HANDSHAKE_IVL:
 	case ZMQ_INVERT_MATCHING:
 	case ZMQ_LINGER:
@@ -499,6 +504,7 @@ luazmq_getsockopt(lua_State *L)
 		break;
 
 	/* options returning string or binary data */
+	case ZMQ_BINDTODEVICE:
 	case ZMQ_CURVE_PUBLICKEY:
 	case ZMQ_CURVE_SECRETKEY:
 	case ZMQ_CURVE_SERVERKEY:
@@ -513,7 +519,36 @@ luazmq_getsockopt(lua_State *L)
 		lua_pushlstring(L, option_value, len);
 		break;
 
+	/* options returning a table, containing one or more strings */
+	case ZMQ_EVENTS:
+		lua_newtable(L);
+		if (*(int *)&option_value & ZMQ_POLLIN) {
+			lua_pushstring(L, "pollin");
+			lua_pushboolean(L, 1);
+			lua_settable(L, -3);
+		}
+		if (*(int *)&option_value & ZMQ_POLLOUT) {
+			lua_pushstring(L, "pollout");
+			lua_pushboolean(L, 1);
+			lua_settable(L, -3);
+		}
+		break;
+
 	/* options returning int, mapped to string */
+	case ZMQ_GSSAPI_SERVICE_PRINCIPAL_NAMETYPE:
+	case ZMQ_GSSAPI_PRINCIPAL_NAMETYPE:
+		switch (*(int *)&option_value) {
+		case ZMQ_GSSAPI_NT_HOSTBASED:
+			lua_pushstring(L, "hostbased");
+			break;
+		case ZMQ_GSSAPI_NT_USER_NAME:
+			lua_pushstring(L, "user-name");
+			break;
+		case ZMQ_GSSAPI_NT_KRB5_PRINCIPAL:
+			lua_pushstring(L, "krb5-principal");
+			break;
+		}
+		break;
 	case ZMQ_MECHANISM:
 		switch (*(int *)&option_value) {
 		case ZMQ_NULL:
@@ -739,7 +774,7 @@ static const char *setsockopt_options[] = {
 	"handshake-ivl",
 	"heartbeat-ivl",
 	"heartbeat-timeout",
-	"heartbeat-ttl"
+	"heartbeat-ttl",
 	"identity",
 	"immediate",
 	"invert-matching",
@@ -748,7 +783,7 @@ static const char *setsockopt_options[] = {
 	"maxmsgsize",
 	"multicast-hops",
 	"multicast-maxtpdu",
-	"plain-password", 
+	"plain-password",
 	"plain-server",
 	"plain-username",
 	"use-fd",
@@ -867,7 +902,7 @@ luazmq_setsockopt(lua_State *L)
 	/* options using an int64_t */
 	case ZMQ_MAXMSGSIZE:
 		int64_tval = luaL_checkinteger(L, 3);
-		rv = zmq_setsockopt(*sock, option_name, &int64_tval, 
+		rv = zmq_setsockopt(*sock, option_name, &int64_tval,
 		    sizeof int64_tval);
 		break;
 
@@ -897,7 +932,7 @@ luazmq_setsockopt(lua_State *L)
 	case ZMQ_XPUB_WELCOME_MSG:
 	case ZMQ_ZAP_DOMAIN:
 		strval = luaL_checklstring(L, 3, &len);
-		rv = zmq_setsockopt(*sock, option_name, &strval, len);
+		rv = zmq_setsockopt(*sock, option_name, strval, len);
 		break;
 	}
 	lua_pushboolean(L, rv == 0 ? 1 : 0);
@@ -987,14 +1022,14 @@ luaopen_zmq(lua_State *L)
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2014 - 2019 by "
+	lua_pushliteral(L, "Copyright (C) 2014 - 2020 by "
 	    "micro systems marc balmer");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "0MQ for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "zmq 1.2.0");
+	lua_pushliteral(L, "zmq 1.2.1");
 	lua_settable(L, -3);
 	return 1;
 }
