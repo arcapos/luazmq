@@ -59,17 +59,17 @@ luazmq_has(lua_State *L)
 static int
 luazmq_msg_init(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 	const char *data;
 	size_t len;
 
-	msg = lua_newuserdata(L, sizeof(void *));
-	if (lua_gettop(L) == 1) {
+	msg = lua_newuserdata(L, sizeof(zmq_msg_t));
+	if (lua_gettop(L) == 2) {
 		data = lua_tolstring(L, 1, &len);
-		zmq_msg_init_size(*msg, len);
-		memcpy(zmq_msg_data(*msg), data, len);
+		zmq_msg_init_size(msg, len);
+		memcpy(zmq_msg_data(msg), data, len);
 	} else
-		zmq_msg_init(*msg);
+		zmq_msg_init(msg);
 	luaL_getmetatable(L, ZMQ_MSG_METATABLE);
 	lua_setmetatable(L, -2);
 
@@ -389,45 +389,45 @@ luazmq_proxy(lua_State *L)
 static int
 luazmq_msg_copy(lua_State *L)
 {
-	void **dest, **src;
+	zmq_msg_t *dest, *src;
 
 	dest = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 	src = luaL_checkudata(L, 2, ZMQ_MSG_METATABLE);
-	lua_pushboolean(L, zmq_msg_copy(*dest, *src) == 0 ? 1 : 0);
+	lua_pushboolean(L, zmq_msg_copy(dest, src) == 0 ? 1 : 0);
 	return 1;
 }
 
 static int
 luazmq_msg_move(lua_State *L)
 {
-	void **dest, **src;
+	zmq_msg_t *dest, *src;
 
 	dest = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 	src = luaL_checkudata(L, 2, ZMQ_MSG_METATABLE);
-	lua_pushboolean(L, zmq_msg_move(*dest, *src) == 0 ? 1 : 0);
+	lua_pushboolean(L, zmq_msg_move(dest, src) == 0 ? 1 : 0);
 	return 1;
 }
 
 static int
 luazmq_msg_data(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 	size_t len;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
-	len = zmq_msg_size(*msg);
-	lua_pushlstring(L, zmq_msg_data(*msg), len);
+	len = zmq_msg_size(msg);
+	lua_pushlstring(L, zmq_msg_data(msg), len);
 	return 1;
 }
 
 static int
 luazmq_msg_gets(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 	const char *val;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
-	val = zmq_msg_gets(*msg, luaL_checkstring(L, 2));
+	val = zmq_msg_gets(msg, luaL_checkstring(L, 2));
 	if (val == NULL)
 		lua_pushnil(L);
 	else
@@ -451,11 +451,11 @@ static const char *msg_get_property_nm[] = {
 static int
 luazmq_msg_get(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 
-	lua_pushinteger(L, zmq_msg_get(*msg,
+	lua_pushinteger(L, zmq_msg_get(msg,
 	    msg_get_properties[luaL_checkoption(L, 2, NULL,
 	    msg_get_property_nm)]));
 	return 1;
@@ -474,11 +474,11 @@ static const char *msg_set_property_nm[] = {
 static int
 luazmq_msg_set(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 
-	lua_pushboolean(L, zmq_msg_set(*msg,
+	lua_pushboolean(L, zmq_msg_set(msg,
 	    msg_set_properties[luaL_checkoption(L, 2, NULL,
 	    msg_set_property_nm)], luaL_checkinteger(L, 3)) == 0 ? 1 : 0);
 	return 1;
@@ -487,11 +487,11 @@ luazmq_msg_set(lua_State *L)
 static int
 luazmq_msg_more(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 
-	lua_pushboolean(L, zmq_msg_more(*msg) == 0 ? 1 : 0);
+	lua_pushboolean(L, zmq_msg_more(msg) == 0 ? 1 : 0);
 	return 1;
 }
 
@@ -499,23 +499,23 @@ luazmq_msg_more(lua_State *L)
 static int
 luazmq_msg_routing_id(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 
-	lua_pushinteger(L, zmq_msg_routing_id(*msg));
+	lua_pushinteger(L, zmq_msg_routing_id(msg));
 	return 1;
 }
 
 static int
 luazmq_msg_set_routing_id(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
 
 	lua_pushboolean(L,
-	    zmq_msg_set_routing_id(*msg, luaL_checkinteger(L, 2)) == 0 ? 1 : 0);
+	    zmq_msg_set_routing_id(msg, luaL_checkinteger(L, 2)) == 0 ? 1 : 0);
 	return 1;
 }
 #endif
@@ -532,7 +532,8 @@ static const char *msg_recv_options[] = {
 static int
 luazmq_msg_recv(lua_State *L)
 {
-	void **sock, **msg;
+	void **sock;
+	zmq_msg_t *msg;
 	int len, flags;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
@@ -540,7 +541,7 @@ luazmq_msg_recv(lua_State *L)
 	flags = lua_gettop(L) == 3 ?
 	    msg_recv_flags[luaL_checkoption(L, 3, NULL, msg_recv_options)] : 0;
 
-	len = zmq_msg_recv(*msg, *sock, flags);
+	len = zmq_msg_recv(msg, *sock, flags);
 	if (len == -1) {
 		if (errno != EAGAIN)
 			return luaL_error(L, "zmq_msg_recv failed");
@@ -565,7 +566,8 @@ static const char *msg_send_options[] = {
 static int
 luazmq_msg_send(lua_State *L)
 {
-	void **msg, **sock;
+	void **sock;
+	zmq_msg_t *msg;
 	int len, n, flags;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
@@ -575,7 +577,7 @@ luazmq_msg_send(lua_State *L)
 		flags |= msg_send_flags[luaL_checkoption(L, n, NULL,
 		    msg_send_options)];
 
-	len = zmq_msg_send(*msg, *sock, flags);
+	len = zmq_msg_send(msg, *sock, flags);
 	if (len == -1)
 		lua_pushnil(L);
 	else
@@ -586,10 +588,10 @@ luazmq_msg_send(lua_State *L)
 static int
 luazmq_msg_size(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
-	lua_pushinteger(L, zmq_msg_size(*msg));
+	lua_pushinteger(L, zmq_msg_size(msg));
 	return 1;
 }
 
@@ -597,13 +599,11 @@ luazmq_msg_size(lua_State *L)
 static int
 luazmq_msg_close(lua_State *L)
 {
-	void **msg;
+	zmq_msg_t *msg;
 
 	msg = luaL_checkudata(L, 1, ZMQ_MSG_METATABLE);
-	if (*msg) {
-		zmq_msg_close(*msg);
-		*msg = NULL;
-	}
+	if (msg)
+		zmq_msg_close(msg);
 	return 0;
 }
 
