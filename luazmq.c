@@ -913,20 +913,18 @@ static int
 luazmq_recv(lua_State *L)
 {
 	void **sock;
-	int nbytes, flags;
-	char *buf;
-	size_t len;
+	int flags;
+	zmq_msg_t msg;
 
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
-	len = luaL_checkinteger(L, 2);
 	flags = lua_gettop(L) == 3 ?
 	     msg_recv_flags[luaL_checkoption(L, 3, NULL, msg_recv_options)] : 0;
-	buf = malloc(len + 1);
-	nbytes = zmq_recv(*sock, buf, len, flags);
-	buf[len] = '\0';
-	buf[nbytes] = '\0';
-	lua_pushlstring(L, buf, nbytes);
-	free(buf);
+
+	zmq_msg_init(&msg);
+	zmq_msg_recv(&msg, *sock, flags);
+
+	lua_pushlstring(L, zmq_msg_data(&msg), zmq_msg_size(&msg));
+	zmq_msg_close(&msg);
 	return 1;
 }
 
