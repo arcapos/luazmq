@@ -33,6 +33,9 @@
 #define ZMQ_COUNTER_METATABLE	"0MQ atomic counter"
 #define ZMQ_CTX_METATABLE	"0MQ context"
 #define ZMQ_MSG_METATABLE	"0MQ message"
+#ifdef ZMQ_BUILD_DRAFT_API
+#define ZMQ_POLLER_METATABLE	"0MQ poller"
+#endif
 #define ZMQ_SOCKET_METATABLE	"0MQ socket"
 
 #endif /* __ZMQ_H__ */

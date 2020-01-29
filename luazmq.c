@@ -72,9 +72,22 @@ luazmq_msg_init(lua_State *L)
 		zmq_msg_init(msg);
 	luaL_getmetatable(L, ZMQ_MSG_METATABLE);
 	lua_setmetatable(L, -2);
-
 	return 1;
 }
+
+#ifdef ZMQ_BUILD_DRAFT_API
+static int
+luazmq_poller_new(lua_State *L)
+{
+	void  **poller;
+
+	poller = lua_newuserdata(L, sizeof(void *));
+	*poller = zmq_poller_new();
+	luaL_getmetatable(L, ZMQ_POLLER_METATABLE);
+	lua_setmetatable(L, -2);
+	return 1;
+}
+#endif
 
 static int
 luazmq_atomic_counter_new(lua_State *L)
@@ -607,6 +620,161 @@ luazmq_msg_close(lua_State *L)
 	return 0;
 }
 
+#ifdef ZMQ_BUILD_DRAFT_API
+
+/* Poller functions */
+static int poller_events[] = {
+	ZMQ_POLLIN,
+	ZMQ_POLLOUT,
+	ZMQ_POLLERR,
+	ZMQ_POLLPRI
+};
+
+static const char *poller_options[] = {
+	"pollin",
+	"pollout",
+	"pollerr",
+	"pollpri",
+	NULL
+};
+
+static int
+luazmq_poller_add(lua_State *L)
+{
+	void **poller;
+	void **sock;
+	int n, events;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	sock = luaL_checkudata(L, 2, ZMQ_SOCKET_METATABLE);
+
+	for (events = 0, n = 3; n <= lua_gettop(L); n++)
+		events |= poller_flags[luaL_checkoption(L, n, NULL,
+		    poller_options)];
+
+	lua_pushboolean(L,
+	    zmq_poller_add(*poller, *sock, NULL, events) == 0 ? 1 : 0);
+	return 1;
+}
+
+static int
+luazmq_poller_modify(lua_State *L)
+{
+	void **poller;
+	void **sock;
+	int n, events;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	sock = luaL_checkudata(L, 2, ZMQ_SOCKET_METATABLE);
+
+	for (events = 0, n = 3; n <= lua_gettop(L); n++)
+		events |= poller_flags[luaL_checkoption(L, n, NULL,
+		    poller_options)];
+
+	lua_pushboolean(L,
+	    zmq_poller_modify(*poller, *sock, events) == 0 ? 1 : 0);
+	return 1;
+}
+
+static int
+luazmq_poller_remove(lua_State *L)
+{
+	void **poller;
+	void **sock;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	sock = luaL_checkudata(L, 2, ZMQ_SOCKET_METATABLE);
+
+	lua_pushboolean(L,
+	    zmq_poller_remove(*poller, *sock) == 0 ? 1 : 0);
+
+	return 1;
+}
+
+static int
+luazmq_poller_add_fd(lua_State *L)
+{
+	void **poller;
+	int fd, n, events;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	int n, events;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	fd = luaL_checkinteger(L, 2);
+
+	for (events = 0, n = 3; n <= lua_gettop(L); n++)
+		events |= poller_flags[luaL_checkoption(L, n, NULL,
+		    poller_options)];
+
+	lua_pushboolean(L,
+	    zmq_poller_add_fd(*poller, fd, NULL, events) == 0 ? 1 : 0);
+
+	return 1;
+}
+
+static int
+luazmq_poller_modify_fd(lua_State *L)
+{
+	void **poller;
+	int fd, n, events;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	fd = luaL_checkinteger(L, 2);
+
+	for (events = 0, n = 3; n <= lua_gettop(L); n++)
+		events |= poller_flags[luaL_checkoption(L, n, NULL,
+		    poller_options)];
+
+	lua_pushboolean(L,
+	    zmq_poller_modify_fd(*poller, fd, events) == 0 ? 1 : 0);
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+
+	return 1;
+}
+
+static int
+luazmq_poller_remove_fd(lua_State *L)
+{
+	void **poller;
+	int fd;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+	fd = luaL_checkinteger(L, 2);
+
+	lua_pushboolean(L,
+	    zmq_poller_remove_fd(*poller, fd) == 0 ? 1 : 0);
+
+	return 1;
+}
+
+static int
+luazmq_poller_wait_all(lua_State *L)
+{
+	void **poller;
+
+	poller = luaL_checkudata(L, 1, ZMQ_POLLER_METATABLE);
+
+	lua_pushinteger(L, zmq_poller_wait_all(*poller, NULL, 0,
+	    luaL_checkinteger(L, 2));
+	return 1;
+}
+
+static int
+luazmq_poller_destroy(lua_State *L)
+{
+	void **poller;
+
+	poller = luaL_checkudata(L, -1, ZMQ_POLLER_METATABLE);
+	if (*poller) {
+		zmq_poller_destroy(*poller);
+		*poller = NULL;
+	}
+	return 0;
+}
+#endif /* ZMQ_BUILD_DRAFT_API */
+
 /* Socket functions */
 static int
 luazmq_bind(lua_State *L)
@@ -633,7 +801,6 @@ luazmq_close(lua_State *L)
 	}
 	return 0;
 }
-
 
 static int
 luazmq_connect(lua_State *L)
@@ -1238,6 +1405,9 @@ luaopen_zmq(lua_State *L)
 		{ "ctx",		luazmq_ctx_new },
 		{ "has",		luazmq_has },
 		{ "msg",		luazmq_msg_init },
+#ifdef ZMQ_BUILD_DRAFT_API
+		{ "poller",		luazmq_poller_new },
+#endif
 		{ "atomicCounter",	luazmq_atomic_counter_new },
 		{ "curveKeypair",	luazmq_curve_keypair },
 		{ "strerror",		luazmq_strerror },
@@ -1279,6 +1449,19 @@ luaopen_zmq(lua_State *L)
 		{ "size",		luazmq_msg_size },
 		{ NULL,			NULL }
 	};
+#ifdef ZMQ_BUILD_DRAFT_API
+	struct luaL_Reg poller_methods[] = {
+		{ "add",		luazmq_poller_add },
+		{ "modify",		luazmq_poller_modify },
+		{ "remove",		luazmq_poller_remove },
+		{ "addFd",		luazmq_poller_add_fd },
+		{ "modifyFd",		luazmq_poller_modify_fd },
+		{ "removeFd",		luazmq_poller_remove_fd },
+		{ "waitAll",		luazmq_poller_wait_all },
+		{ "destroy",		luazmq_poller_destroy },
+		{ NULL,			NULL }
+	};
+#endif
 	struct luaL_Reg socket_methods[] = {
 		{ "bind",		luazmq_bind },
 		{ "close",		luazmq_close },
@@ -1345,6 +1528,24 @@ luaopen_zmq(lua_State *L)
 		lua_settable(L, -3);
 	}
 	lua_pop(L, 1);
+
+#ifdef ZMQ_BUILD_DRAFT_API
+	if (luaL_newmetatable(L, ZMQ_POLLER_METATABLE)) {
+		luaL_setfuncs(L, poller_methods, 0);
+		lua_pushliteral(L, "__gc");
+		lua_pushcfunction(L, luazmq_poller_destroy);
+		lua_settable(L, -3);
+
+		lua_pushliteral(L, "__index");
+		lua_pushvalue(L, -2);
+		lua_settable(L, -3);
+
+		lua_pushliteral(L, "__metatable");
+		lua_pushliteral(L, "must not access this metatable");
+		lua_settable(L, -3);
+	}
+	lua_pop(L, 1);
+#endif
 
 	if (luaL_newmetatable(L, ZMQ_SOCKET_METATABLE)) {
 		luaL_setfuncs(L, socket_methods, 0);
