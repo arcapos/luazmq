@@ -3,7 +3,6 @@ local zmq = require 'zmq'
 local capabilities = {
 	ipc	= 'the ipc:// protocol',
 	pgm	= 'the pgm:// protocol',
-	tcp	= 'the tcp:// protocol',
 	tipc	= 'the tipc:// protocol',
 	norm	= 'the norm:// protocol',
 	curve	= 'the CURVE security mechanism',
