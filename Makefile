@@ -1,25 +1,20 @@
 SRCS=		luazmq.c
 LIB=		zmq
 
-OS!=		uname
+LUAVER=		$(shell lua -v 2>&1 | cut -c 5-7)
 
-.if ${OS} == "NetBSD"
-LOCALBASE=	/usr/pkg
-LDADD+=		-R/usr/lib -R${XDIR}/lib -R${LOCALBASE}/lib
-.else
-LOCALBASE=	/usr/local
-.endif
+CFLAGS+=	-O3 -Wall -fPIC -I/usr/include -I/usr/include/lua${LUAVER}
 
-NOLINT=	1
-CFLAGS+=	-I${LOCALBASE}/include
-LDADD+=		-L${LOCALBASE}/lib
+LDADD+=		-L/usr/lib -lpthread -lzmq
 
-LIBDIR=		${LOCALBASE}/lib/lua/5.4
+LIBDIR=		/usr/lib
+LUADIR=		/usr/lib/lua/${LUAVER}
 
-libinstall:
+${LIB}.so:	${SRCS:.c=.o}
+		cc -shared -o ${LIB}.so ${CFLAGS} ${SRCS:.c=.o} ${LDADD}
 
+clean:
+		rm -f *.o *.so
 install:
-	${INSTALL} -d ${DESTDIR}${LIBDIR}
-	${INSTALL} lib${LIB}.so ${DESTDIR}${LIBDIR}/${LIB}.so
-
-.include <bsd.lib.mk>
+	install -d ${DESTDIR}${LIBDIR}
+	install -m 755 ${LIB}.so ${DESTDIR}${LUADIR}/${LIB}.so
