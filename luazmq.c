@@ -1,28 +1,24 @@
 /*
- * Copyright (c) 2014 - 2020 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
- * All rights reserved.
+ * Copyright (c) 2014 - 2025 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
- *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of Micro Systems Marc Balmer nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL MICRO SYSTEMS MARC BALMER BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /* 0MQ for Lua */
@@ -75,7 +71,7 @@ luazmq_msg_init(lua_State *L)
 	return 1;
 }
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#ifdef ZMQ_HAVE_POLLER
 static int
 luazmq_poller_new(lua_State *L)
 {
@@ -89,6 +85,7 @@ luazmq_poller_new(lua_State *L)
 }
 #endif
 
+#if ZMQ_VERSION > 40104
 static int
 luazmq_atomic_counter_new(lua_State *L)
 {
@@ -158,26 +155,39 @@ luazmq_atomic_counter_destroy(lua_State *L)
 	}
 	return 0;
 }
+#endif
 
 /* Context methods */
 static int ctx_get_option_names[] = {
 	ZMQ_IO_THREADS,
 	ZMQ_MAX_SOCKETS,
+#if ZMQ_VERSION > 40104
 	ZMQ_MAX_MSGSZ,
+#endif
 	ZMQ_SOCKET_LIMIT,
 	ZMQ_IPV6,
+#if ZMQ_VERSION > 40104
 	ZMQ_BLOCKY,
+#endif
+#if ZMQ_VERSION > 40403
 	ZMQ_MSG_T_SIZE
+#endif
 };
 
 static const char *ctx_get_options[] = {
 	"io-threads",
 	"max-sockets",
+#if ZMQ_VERSION > 40104
 	"max-msgsz",
+#endif
 	"socket-limit",
 	"ipv6",
+#if ZMQ_VERSION > 40104
 	"blocky",
+#endif
+#if ZMQ_VERSION > 40403
 	"msg-t-size",
+#endif
 	NULL
 };
 
@@ -201,9 +211,13 @@ static int ctx_set_option_names[] = {
 	ZMQ_THREAD_SCHED_POLICY,
 	ZMQ_THREAD_PRIORITY,
 	ZMQ_MAX_SOCKETS,
+#if ZMQ_VERSION > 40104
 	ZMQ_MAX_MSGSZ,
+#endif
 	ZMQ_IPV6,
+#if ZMQ_VERSION > 40104
 	ZMQ_BLOCKY,
+#endif
 };
 
 static const char *ctx_set_options[] = {
@@ -211,9 +225,13 @@ static const char *ctx_set_options[] = {
 	"thread-sched-policy",
 	"thread-priority",
 	"max-sockets",
+#if ZMQ_VERSION > 40104
 	"max-msgsz",
+#endif
 	"ipv6",
+#if ZMQ_VERSION > 40104
 	"blocky",
+#endif
 	NULL
 };
 
@@ -330,6 +348,7 @@ luazmq_version(lua_State *L)
 {
 	int major, minor, patch;
 	zmq_version(&major, &minor, &patch);
+
 	lua_newtable(L);
 	lua_pushinteger(L, major);
 	lua_setfield(L, -2, "major");
@@ -620,7 +639,7 @@ luazmq_msg_close(lua_State *L)
 	return 0;
 }
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#ifdef ZMQ_HAVE_POLLER
 
 /* Poller functions */
 static int poller_events[] = {
@@ -773,7 +792,7 @@ luazmq_poller_destroy(lua_State *L)
 	}
 	return 0;
 }
-#endif /* ZMQ_BUILD_DRAFT_API */
+#endif /* ZMQ_HAVE_POLLER */
 
 /* Socket functions */
 static int
@@ -818,8 +837,12 @@ luazmq_connect(lua_State *L)
 static int getsockopt_option_names[] = {
 	ZMQ_AFFINITY,
 	ZMQ_BACKLOG,
+#if ZMQ_VERSION > 40403
 	ZMQ_BINDTODEVICE,
+#endif
+#if ZMQ_VERSION > 40104
 	ZMQ_CONNECT_TIMEOUT,
+#endif
 	ZMQ_CURVE_PUBLICKEY,
 	ZMQ_CURVE_SECRETKEY,
 	ZMQ_CURVE_SERVERKEY,
@@ -829,12 +852,16 @@ static int getsockopt_option_names[] = {
 	ZMQ_GSSAPI_PRINCIPAL,
 	ZMQ_GSSAPI_SERVER,
 	ZMQ_GSSAPI_SERVICE_PRINCIPAL,
+#if ZMQ_VERSION > 40403
 	ZMQ_GSSAPI_SERVICE_PRINCIPAL_NAMETYPE,
 	ZMQ_GSSAPI_PRINCIPAL_NAMETYPE,
+#endif
 	ZMQ_HANDSHAKE_IVL,
 	ZMQ_IDENTITY,
 	ZMQ_IMMEDIATE,
+#if ZMQ_VERSION > 40104
 	ZMQ_INVERT_MATCHING,
+#endif
 	ZMQ_IPV4ONLY,
 	ZMQ_IPV6,
 	ZMQ_LAST_ENDPOINT,
@@ -842,11 +869,15 @@ static int getsockopt_option_names[] = {
 	ZMQ_MAXMSGSIZE,
 	ZMQ_MECHANISM,
 	ZMQ_MULTICAST_HOPS,
+#if ZMQ_VERSION > 40104
 	ZMQ_MULTICAST_MAXTPDU,
+#endif
 	ZMQ_PLAIN_PASSWORD,
 	ZMQ_PLAIN_SERVER,
 	ZMQ_PLAIN_USERNAME,
+#if ZMQ_VERSION > 40104
 	ZMQ_USE_FD,
+#endif
 	ZMQ_RATE,
 	ZMQ_RCVBUF,
 	ZMQ_RCVHWM,
@@ -863,22 +894,30 @@ static int getsockopt_option_names[] = {
 	ZMQ_TCP_KEEPALIVE_CNT,
 	ZMQ_TCP_KEEPALIVE_IDLE,
 	ZMQ_TCP_KEEPALIVE_INTVL,
+#if ZMQ_VERSION > 40104
 	ZMQ_TCP_MAXRT,
 	ZMQ_THREAD_SAFE,
+#endif
 	ZMQ_TOS,
 	ZMQ_TYPE,
 	ZMQ_ZAP_DOMAIN,
+#if ZMQ_VERSION > 40104
 	ZMQ_VMCI_BUFFER_SIZE,
 	ZMQ_VMCI_BUFFER_MIN_SIZE,
 	ZMQ_VMCI_BUFFER_MAX_SIZE,
-	ZMQ_VMCI_CONNECT_TIMEOUT
+	ZMQ_VMCI_CONNECT_TIMEOUT,
+#endif
 };
 
 static const char *getsockopt_options[] = {
 	"affinity",
 	"backlog",
+#if ZMQ_VERSION > 40403
 	"bindtodevice",
+#endif
+#if ZMQ_VERSION > 40104
 	"connect-timeout",
+#endif
 	"curve-publickey",
 	"curve-secretkey",
 	"curve-serverkey",
@@ -886,14 +925,18 @@ static const char *getsockopt_options[] = {
 	"fd",
 	"gssapi-plaintext",
 	"gssapi-principal",
-	"gssapi-server",
+	"gssapi-server"
 	"gssapi-service-principal",
+#if ZMQ_VERSION > 40403
 	"gssapi-service-principal-nametype",
 	"gssapi-principal-nametype",
+#endif
 	"handshake-ivl",
 	"identity",
 	"immediate",
+#if ZMQ_VERSION > 40104
 	"invert-matching",
+#endif
 	"ipv4only",
 	"ipv6",
 	"last-endpoint",
@@ -901,11 +944,15 @@ static const char *getsockopt_options[] = {
 	"maxmsgsize",
 	"mechanism",
 	"multicast-hops",
+#if ZMQ_VERSION > 40104
 	"multicast-maxtpdu",
+#endif
 	"plain-password",
 	"plain-server",
 	"plain-username",
+#if ZMQ_VERSION > 40104
 	"use-fd",
+#endif
 	"rate",
 	"rcvbuf",
 	"rcvhwm",
@@ -922,15 +969,19 @@ static const char *getsockopt_options[] = {
 	"tcp-keepalive-cnt",
 	"tcp-keepalive-idle",
 	"tcp-keepalive-intvl",
+#if ZMQ_VERSION > 40104
 	"tcp-maxrt",
 	"thread-safe",
+#endif
 	"tos",
 	"type",
 	"zap-domain",
+#if ZMQ_VERSION > 40104
 	"vmci-buffer-size",
 	"vmci-buffer-min-size",
 	"vmci-buffer-max-size",
 	"vmci-connect-timeout",
+#endif
 	NULL
 };
 
@@ -958,21 +1009,19 @@ luazmq_getsockopt(lua_State *L)
 	case ZMQ_IMMEDIATE:
 	case ZMQ_IPV4ONLY:
 	case ZMQ_IPV6:
+#if VERSION > 40104
 	case ZMQ_THREAD_SAFE:
+#endif
 		lua_pushboolean(L, (int)(*(int *)&option_value[0]));
 		break;
 
 	/* options returning int */
 	case ZMQ_BACKLOG:
-	case ZMQ_CONNECT_TIMEOUT:
 	case ZMQ_FD:
 	case ZMQ_HANDSHAKE_IVL:
-	case ZMQ_INVERT_MATCHING:
 	case ZMQ_LINGER:
 	case ZMQ_MULTICAST_HOPS:
-	case ZMQ_MULTICAST_MAXTPDU:
 	case ZMQ_PLAIN_SERVER:
-	case ZMQ_USE_FD:
 	case ZMQ_RATE:
 	case ZMQ_RCVBUF:
 	case ZMQ_RCVHWM:
@@ -988,10 +1037,16 @@ luazmq_getsockopt(lua_State *L)
 	case ZMQ_TCP_KEEPALIVE_CNT:
 	case ZMQ_TCP_KEEPALIVE_IDLE:
 	case ZMQ_TCP_KEEPALIVE_INTVL:
-	case ZMQ_TCP_MAXRT:
 	case ZMQ_TOS:
 	case ZMQ_TYPE:
+#if VERSION > 40104
+	case ZMQ_CONNECT_TIMEOUT:
+	case ZMQ_INVERT_MATCHING:
+	case ZMQ_MULTICAST_MAXTPDU:
+	case ZMQ_USE_FD:
+	case ZMQ_TCP_MAXRT:
 	case ZMQ_VMCI_CONNECT_TIMEOUT:
+#endif
 		lua_pushinteger(L, (lua_Integer)(*(int *)&option_value[0]));
 		break;
 
@@ -1002,15 +1057,19 @@ luazmq_getsockopt(lua_State *L)
 
 	/* options returning uint64_t */
 	case ZMQ_AFFINITY:
+#if VERSION > 40104
 	case ZMQ_VMCI_BUFFER_SIZE:
 	case ZMQ_VMCI_BUFFER_MIN_SIZE:
 	case ZMQ_VMCI_BUFFER_MAX_SIZE:
+#endif
 		lua_pushinteger(L,
 		    (lua_Integer)(*(uint64_t *)&option_value[0]));
 		break;
 
 	/* options returning string or binary data */
+#if ZMQ_VERSION > 40403
 	case ZMQ_BINDTODEVICE:
+#endif
 	case ZMQ_CURVE_PUBLICKEY:
 	case ZMQ_CURVE_SECRETKEY:
 	case ZMQ_CURVE_SERVERKEY:
@@ -1041,6 +1100,7 @@ luazmq_getsockopt(lua_State *L)
 		break;
 
 	/* options returning int, mapped to string */
+#if ZMQ_VERSION > 40403
 	case ZMQ_GSSAPI_SERVICE_PRINCIPAL_NAMETYPE:
 	case ZMQ_GSSAPI_PRINCIPAL_NAMETYPE:
 		switch (*(int *)&option_value) {
@@ -1055,6 +1115,7 @@ luazmq_getsockopt(lua_State *L)
 			break;
 		}
 		break;
+#endif
 	case ZMQ_MECHANISM:
 		switch (*(int *)&option_value) {
 		case ZMQ_NULL:
@@ -1138,7 +1199,9 @@ static int setsockopt_option_names[] = {
 	ZMQ_BACKLOG,
 	ZMQ_CONNECT_RID,
 	ZMQ_CONFLATE,
+#if VERSION > 40104
 	ZMQ_CONNECT_TIMEOUT,
+#endif
 	ZMQ_CURVE_PUBLICKEY,
 	ZMQ_CURVE_SECRETKEY,
 	ZMQ_CURVE_SERVER,
@@ -1148,21 +1211,29 @@ static int setsockopt_option_names[] = {
 	ZMQ_GSSAPI_SERVER,
 	ZMQ_GSSAPI_SERVICE_PRINCIPAL,
 	ZMQ_HANDSHAKE_IVL,
+#if VERSION > 40104
 	ZMQ_HEARTBEAT_IVL,
 	ZMQ_HEARTBEAT_TIMEOUT,
 	ZMQ_HEARTBEAT_TTL,
+#endif
 	ZMQ_IDENTITY,
 	ZMQ_IMMEDIATE,
+#if VERSION > 40104
 	ZMQ_INVERT_MATCHING,
+#endif
 	ZMQ_IPV6,
 	ZMQ_LINGER,
 	ZMQ_MAXMSGSIZE,
 	ZMQ_MULTICAST_HOPS,
+#if VERSION > 40104
 	ZMQ_MULTICAST_MAXTPDU,
+#endif
 	ZMQ_PLAIN_PASSWORD,
 	ZMQ_PLAIN_SERVER,
 	ZMQ_PLAIN_USERNAME,
+#if VERSION > 40104
 	ZMQ_USE_FD,
+#endif
 	ZMQ_PROBE_ROUTER,
 	ZMQ_RATE,
 	ZMQ_RCVBUF,
@@ -1180,26 +1251,34 @@ static int setsockopt_option_names[] = {
 	ZMQ_SNDHWM,
 	ZMQ_SNDTIMEO,
 	ZMQ_SOCKS_PROXY,
+#if VERSION > 40104
 	ZMQ_STREAM_NOTIFY,
+#endif
 	ZMQ_SUBSCRIBE,
 	ZMQ_TCP_KEEPALIVE,
 	ZMQ_TCP_KEEPALIVE_CNT,
 	ZMQ_TCP_KEEPALIVE_IDLE,
 	ZMQ_TCP_KEEPALIVE_INTVL,
+#if VERSION > 40104
 	ZMQ_TCP_MAXRT,
+#endif
 	ZMQ_TOS,
 	ZMQ_UNSUBSCRIBE,
 	ZMQ_XPUB_VERBOSE,
+#if VERSION > 40104
 	ZMQ_XPUB_VERBOSER,
 	ZMQ_XPUB_MANUAL,
 	ZMQ_XPUB_NODROP,
 	ZMQ_XPUB_WELCOME_MSG,
+#endif
 	ZMQ_ZAP_DOMAIN,
 	ZMQ_IPV4ONLY,
+#if VERSION > 40104
 	ZMQ_VMCI_BUFFER_SIZE,
 	ZMQ_VMCI_BUFFER_MIN_SIZE,
 	ZMQ_VMCI_BUFFER_MAX_SIZE,
-	ZMQ_VMCI_CONNECT_TIMEOUT
+	ZMQ_VMCI_CONNECT_TIMEOUT,
+#endif
 };
 
 static const char *setsockopt_options[] = {
@@ -1207,7 +1286,9 @@ static const char *setsockopt_options[] = {
 	"backlog",
 	"connect-rid",
 	"conflate",
+#if VERSION > 40104
 	"connect-timeout",
+#endif
 	"curve-publickey",
 	"curve-secretkey",
 	"curve-server",
@@ -1217,21 +1298,29 @@ static const char *setsockopt_options[] = {
 	"gssapi-server",
 	"gssapi-service-principal",
 	"handshake-ivl",
+#if VERSION > 40104
 	"heartbeat-ivl",
 	"heartbeat-timeout",
 	"heartbeat-ttl",
+#endif
 	"identity",
 	"immediate",
+#if VERSION > 40104
 	"invert-matching",
+#endif
 	"ipv6",
 	"linger",
 	"maxmsgsize",
 	"multicast-hops",
+#if VERSION > 40104
 	"multicast-maxtpdu",
+#endif
 	"plain-password",
 	"plain-server",
 	"plain-username",
+#if VERSION > 40104
 	"use-fd",
+#endif
 	"probe-router",
 	"rate",
 	"rcvbuf",
@@ -1249,26 +1338,36 @@ static const char *setsockopt_options[] = {
 	"sndhwm",
 	"sndtimeo",
 	"socks-proxy",
+#if VERSION > 40104
 	"stream-notify",
+#endif
 	"subscribe",
 	"tcp-keepalive",
 	"tcp-keepalive-cnt",
 	"tcp-keepalive-idle",
 	"tcp-keepalive-intvl",
+#if VERSION > 40104
 	"tcp-maxrt",
+#endif
 	"tos",
 	"ubsubscribe",
 	"xpub-verbose",
+#if VERSION > 40104
 	"xpub-verboser",
 	"xpub-manual",
+#endif
 	"xpub-nodrop",
+#if VERSION > 40104
 	"xpub-welcome-msg",
+#endif
 	"zap-domain",
 	"ipv4only",
+#if VERSION > 40104
 	"vmci-buffer-size",
 	"vmci-buffer-min-size",
 	"vmci-buffer-max-size",
 	"vmci-connect-timeout",
+#endif
 	NULL
 };
 
@@ -1297,20 +1396,13 @@ luazmq_setsockopt(lua_State *L)
 
 	/* options using an int */
 	case ZMQ_BACKLOG:
-	case ZMQ_CONNECT_TIMEOUT:
 	case ZMQ_CURVE_SERVER:
 	case ZMQ_GSSAPI_PLAINTEXT:
 	case ZMQ_GSSAPI_SERVER:
 	case ZMQ_HANDSHAKE_IVL:
-	case ZMQ_HEARTBEAT_IVL:
-	case ZMQ_HEARTBEAT_TIMEOUT:
-	case ZMQ_HEARTBEAT_TTL:
-	case ZMQ_INVERT_MATCHING:
 	case ZMQ_LINGER:
 	case ZMQ_MULTICAST_HOPS:
-	case ZMQ_MULTICAST_MAXTPDU:
 	case ZMQ_PLAIN_SERVER:
-	case ZMQ_USE_FD:
 	case ZMQ_PROBE_ROUTER:
 	case ZMQ_RATE:
 	case ZMQ_RCVBUF:
@@ -1327,19 +1419,33 @@ luazmq_setsockopt(lua_State *L)
 	case ZMQ_SNDBUF:
 	case ZMQ_SNDHWM:
 	case ZMQ_SNDTIMEO:
-	case ZMQ_STREAM_NOTIFY:
 	case ZMQ_TCP_KEEPALIVE:
 	case ZMQ_TCP_KEEPALIVE_CNT:
 	case ZMQ_TCP_KEEPALIVE_IDLE:
 	case ZMQ_TCP_KEEPALIVE_INTVL:
-	case ZMQ_TCP_MAXRT:
 	case ZMQ_TOS:
 	case ZMQ_XPUB_VERBOSE:
-	case ZMQ_XPUB_VERBOSER:
-	case ZMQ_XPUB_MANUAL:
 	case ZMQ_XPUB_NODROP:
 	case ZMQ_IPV4ONLY:
+#if VERSION > 40104
+	case ZMQ_CONNECT_TIMEOUT:
+
+	case ZMQ_HEARTBEAT_IVL:
+	case ZMQ_HEARTBEAT_TIMEOUT:
+	case ZMQ_HEARTBEAT_TTL:
+	case ZMQ_INVERT_MATCHING:
+
+	case ZMQ_MULTICAST_MAXTPDU:
+
+	case ZMQ_USE_FD:
+
+	case ZMQ_STREAM_NOTIFY:
+
+	case ZMQ_TCP_MAXRT:
+	case ZMQ_XPUB_VERBOSER:
+	case ZMQ_XPUB_MANUAL:
 	case ZMQ_VMCI_CONNECT_TIMEOUT:
+#endif
 		intval = luaL_checkinteger(L, 3);
 		rv = zmq_setsockopt(*sock, option_name, &intval, sizeof intval);
 		break;
@@ -1353,9 +1459,11 @@ luazmq_setsockopt(lua_State *L)
 
 	/* options using an uint64_t */
 	case ZMQ_AFFINITY:
+#if VERSION > 40104
 	case ZMQ_VMCI_BUFFER_SIZE:
 	case ZMQ_VMCI_BUFFER_MIN_SIZE:
 	case ZMQ_VMCI_BUFFER_MAX_SIZE:
+#endif
 		uint64_tval = luaL_checkinteger(L, 3);
 		rv = zmq_setsockopt(*sock, option_name, &uint64_tval,
 		    sizeof uint64_tval);
@@ -1374,7 +1482,9 @@ luazmq_setsockopt(lua_State *L)
 	case ZMQ_SOCKS_PROXY:
 	case ZMQ_SUBSCRIBE:
 	case ZMQ_UNSUBSCRIBE:
+#if VERSION > 40104
 	case ZMQ_XPUB_WELCOME_MSG:
+#endif
 	case ZMQ_ZAP_DOMAIN:
 		strval = luaL_checklstring(L, 3, &len);
 		rv = zmq_setsockopt(*sock, option_name, strval, len);
@@ -1405,10 +1515,12 @@ luaopen_zmq(lua_State *L)
 		{ "ctx",		luazmq_ctx_new },
 		{ "has",		luazmq_has },
 		{ "msg",		luazmq_msg_init },
-#ifdef ZMQ_BUILD_DRAFT_API
+#ifdef ZMQ_HAVE_POLLER
 		{ "poller",		luazmq_poller_new },
 #endif
+#if VERSION > 40104
 		{ "atomicCounter",	luazmq_atomic_counter_new },
+#endif
 		{ "curveKeypair",	luazmq_curve_keypair },
 		{ "strerror",		luazmq_strerror },
 		{ "version",		luazmq_version },
@@ -1417,6 +1529,7 @@ luaopen_zmq(lua_State *L)
 		{ "proxy",		luazmq_proxy },
 		{ NULL,			NULL }
 	};
+#if ZMQ_VERSION > 40104
 	struct luaL_Reg counter_methods[] = {
 		{ "dec",		luazmq_atomic_counter_dec },
 		{ "inc",		luazmq_atomic_counter_inc },
@@ -1424,6 +1537,7 @@ luaopen_zmq(lua_State *L)
 		{ "value",		luazmq_atomic_counter_value },
 		{ NULL,			NULL }
 	};
+#endif
 	struct luaL_Reg ctx_methods[] = {
 		{ "get",		luazmq_ctx_get },
 		{ "set",		luazmq_ctx_set },
@@ -1449,7 +1563,7 @@ luaopen_zmq(lua_State *L)
 		{ "size",		luazmq_msg_size },
 		{ NULL,			NULL }
 	};
-#ifdef ZMQ_BUILD_DRAFT_API
+#ifdef ZMQ_HAVE_POLLER
 	struct luaL_Reg poller_methods[] = {
 		{ "add",		luazmq_poller_add },
 		{ "modify",		luazmq_poller_modify },
@@ -1493,6 +1607,7 @@ luaopen_zmq(lua_State *L)
 	}
 	lua_pop(L, 1);
 
+#if ZMQ_VERSION > 40104
 	if (luaL_newmetatable(L, ZMQ_COUNTER_METATABLE)) {
 		luaL_setfuncs(L, counter_methods, 0);
 		lua_pushliteral(L, "__gc");
@@ -1508,6 +1623,7 @@ luaopen_zmq(lua_State *L)
 		lua_settable(L, -3);
 	}
 	lua_pop(L, 1);
+#endif
 
 	if (luaL_newmetatable(L, ZMQ_MSG_METATABLE)) {
 		luaL_setfuncs(L, msg_methods, 0);
@@ -1529,7 +1645,7 @@ luaopen_zmq(lua_State *L)
 	}
 	lua_pop(L, 1);
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#ifdef ZMQ_HAVE_POLLER
 	if (luaL_newmetatable(L, ZMQ_POLLER_METATABLE)) {
 		luaL_setfuncs(L, poller_methods, 0);
 		lua_pushliteral(L, "__gc");
@@ -1564,14 +1680,14 @@ luaopen_zmq(lua_State *L)
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2014 - 2020 by "
+	lua_pushliteral(L, "Copyright (C) 2014 - 2025 by "
 	    "micro systems marc balmer");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "0MQ for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "zmq 1.2.1");
+	lua_pushliteral(L, "zmq 1.2.2");
 	lua_settable(L, -3);
 	return 1;
 }
