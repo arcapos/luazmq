@@ -26,7 +26,9 @@
 #ifndef __ZMQ_H__
 #define __ZMQ_H__
 
+#if ZMQ_VERSION > 40104
 #define ZMQ_COUNTER_METATABLE	"0MQ atomic counter"
+#endif
 #define ZMQ_CTX_METATABLE	"0MQ context"
 #define ZMQ_MSG_METATABLE	"0MQ message"
 #ifdef ZMQ_HAVE_POLLER

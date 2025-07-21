@@ -45,12 +45,14 @@ luazmq_ctx_new(lua_State *L)
 	return 1;
 }
 
+#ifdef ZMQ_HAS_CAPABILITIES
 static int
 luazmq_has(lua_State *L)
 {
 	lua_pushboolean(L, zmq_has(luaL_checkstring(L, 1)));
 	return 1;
 }
+#endif
 
 static int
 luazmq_msg_init(lua_State *L)
@@ -1009,7 +1011,7 @@ luazmq_getsockopt(lua_State *L)
 	case ZMQ_IMMEDIATE:
 	case ZMQ_IPV4ONLY:
 	case ZMQ_IPV6:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_THREAD_SAFE:
 #endif
 		lua_pushboolean(L, (int)(*(int *)&option_value[0]));
@@ -1039,7 +1041,7 @@ luazmq_getsockopt(lua_State *L)
 	case ZMQ_TCP_KEEPALIVE_INTVL:
 	case ZMQ_TOS:
 	case ZMQ_TYPE:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_CONNECT_TIMEOUT:
 	case ZMQ_INVERT_MATCHING:
 	case ZMQ_MULTICAST_MAXTPDU:
@@ -1057,7 +1059,7 @@ luazmq_getsockopt(lua_State *L)
 
 	/* options returning uint64_t */
 	case ZMQ_AFFINITY:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_VMCI_BUFFER_SIZE:
 	case ZMQ_VMCI_BUFFER_MIN_SIZE:
 	case ZMQ_VMCI_BUFFER_MAX_SIZE:
@@ -1199,7 +1201,7 @@ static int setsockopt_option_names[] = {
 	ZMQ_BACKLOG,
 	ZMQ_CONNECT_RID,
 	ZMQ_CONFLATE,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_CONNECT_TIMEOUT,
 #endif
 	ZMQ_CURVE_PUBLICKEY,
@@ -1211,27 +1213,27 @@ static int setsockopt_option_names[] = {
 	ZMQ_GSSAPI_SERVER,
 	ZMQ_GSSAPI_SERVICE_PRINCIPAL,
 	ZMQ_HANDSHAKE_IVL,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_HEARTBEAT_IVL,
 	ZMQ_HEARTBEAT_TIMEOUT,
 	ZMQ_HEARTBEAT_TTL,
 #endif
 	ZMQ_IDENTITY,
 	ZMQ_IMMEDIATE,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_INVERT_MATCHING,
 #endif
 	ZMQ_IPV6,
 	ZMQ_LINGER,
 	ZMQ_MAXMSGSIZE,
 	ZMQ_MULTICAST_HOPS,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_MULTICAST_MAXTPDU,
 #endif
 	ZMQ_PLAIN_PASSWORD,
 	ZMQ_PLAIN_SERVER,
 	ZMQ_PLAIN_USERNAME,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_USE_FD,
 #endif
 	ZMQ_PROBE_ROUTER,
@@ -1251,7 +1253,7 @@ static int setsockopt_option_names[] = {
 	ZMQ_SNDHWM,
 	ZMQ_SNDTIMEO,
 	ZMQ_SOCKS_PROXY,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_STREAM_NOTIFY,
 #endif
 	ZMQ_SUBSCRIBE,
@@ -1259,13 +1261,13 @@ static int setsockopt_option_names[] = {
 	ZMQ_TCP_KEEPALIVE_CNT,
 	ZMQ_TCP_KEEPALIVE_IDLE,
 	ZMQ_TCP_KEEPALIVE_INTVL,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_TCP_MAXRT,
 #endif
 	ZMQ_TOS,
 	ZMQ_UNSUBSCRIBE,
 	ZMQ_XPUB_VERBOSE,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_XPUB_VERBOSER,
 	ZMQ_XPUB_MANUAL,
 	ZMQ_XPUB_NODROP,
@@ -1273,7 +1275,7 @@ static int setsockopt_option_names[] = {
 #endif
 	ZMQ_ZAP_DOMAIN,
 	ZMQ_IPV4ONLY,
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	ZMQ_VMCI_BUFFER_SIZE,
 	ZMQ_VMCI_BUFFER_MIN_SIZE,
 	ZMQ_VMCI_BUFFER_MAX_SIZE,
@@ -1286,7 +1288,7 @@ static const char *setsockopt_options[] = {
 	"backlog",
 	"connect-rid",
 	"conflate",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"connect-timeout",
 #endif
 	"curve-publickey",
@@ -1298,27 +1300,27 @@ static const char *setsockopt_options[] = {
 	"gssapi-server",
 	"gssapi-service-principal",
 	"handshake-ivl",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"heartbeat-ivl",
 	"heartbeat-timeout",
 	"heartbeat-ttl",
 #endif
 	"identity",
 	"immediate",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"invert-matching",
 #endif
 	"ipv6",
 	"linger",
 	"maxmsgsize",
 	"multicast-hops",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"multicast-maxtpdu",
 #endif
 	"plain-password",
 	"plain-server",
 	"plain-username",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"use-fd",
 #endif
 	"probe-router",
@@ -1338,7 +1340,7 @@ static const char *setsockopt_options[] = {
 	"sndhwm",
 	"sndtimeo",
 	"socks-proxy",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"stream-notify",
 #endif
 	"subscribe",
@@ -1346,23 +1348,23 @@ static const char *setsockopt_options[] = {
 	"tcp-keepalive-cnt",
 	"tcp-keepalive-idle",
 	"tcp-keepalive-intvl",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"tcp-maxrt",
 #endif
 	"tos",
 	"ubsubscribe",
 	"xpub-verbose",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"xpub-verboser",
 	"xpub-manual",
 #endif
 	"xpub-nodrop",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"xpub-welcome-msg",
 #endif
 	"zap-domain",
 	"ipv4only",
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	"vmci-buffer-size",
 	"vmci-buffer-min-size",
 	"vmci-buffer-max-size",
@@ -1427,7 +1429,7 @@ luazmq_setsockopt(lua_State *L)
 	case ZMQ_XPUB_VERBOSE:
 	case ZMQ_XPUB_NODROP:
 	case ZMQ_IPV4ONLY:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_CONNECT_TIMEOUT:
 
 	case ZMQ_HEARTBEAT_IVL:
@@ -1459,7 +1461,7 @@ luazmq_setsockopt(lua_State *L)
 
 	/* options using an uint64_t */
 	case ZMQ_AFFINITY:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_VMCI_BUFFER_SIZE:
 	case ZMQ_VMCI_BUFFER_MIN_SIZE:
 	case ZMQ_VMCI_BUFFER_MAX_SIZE:
@@ -1482,7 +1484,7 @@ luazmq_setsockopt(lua_State *L)
 	case ZMQ_SOCKS_PROXY:
 	case ZMQ_SUBSCRIBE:
 	case ZMQ_UNSUBSCRIBE:
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 	case ZMQ_XPUB_WELCOME_MSG:
 #endif
 	case ZMQ_ZAP_DOMAIN:
@@ -1513,12 +1515,14 @@ luaopen_zmq(lua_State *L)
 {
 	struct luaL_Reg functions[] = {
 		{ "ctx",		luazmq_ctx_new },
+#ifdef ZMQ_HAS_CAPABILITIES
 		{ "has",		luazmq_has },
+#endif
 		{ "msg",		luazmq_msg_init },
 #ifdef ZMQ_HAVE_POLLER
 		{ "poller",		luazmq_poller_new },
 #endif
-#if VERSION > 40104
+#if ZMQ_VERSION > 40104
 		{ "atomicCounter",	luazmq_atomic_counter_new },
 #endif
 		{ "curveKeypair",	luazmq_curve_keypair },
