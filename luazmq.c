@@ -1138,6 +1138,17 @@ luazmq_getsockopt(lua_State *L)
 	return 1;
 }
 
+static int poll_events[] = {
+	ZMQ_POLLIN,
+	ZMQ_POLLOUT
+};
+
+static const char *poll_options[] = {
+	"pollin",
+	"pollout",
+	NULL
+};
+
 static int
 luazmq_poll(lua_State *L)
 {
@@ -1147,9 +1158,9 @@ luazmq_poll(lua_State *L)
 
 	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
 	item.socket = *sock;
-	item.events = ZMQ_POLLIN;
+	item.events = luaL_checkoption(L, 2, NULL, poll_options);
 
-	rv =  zmq_poll(&item, 1, luaL_checkinteger(L, 2));
+	rv =  zmq_poll(&item, 1, luaL_checkinteger(L, 3));
 	if (rv == -1) {
 		switch (errno) {
 		case ETERM:
