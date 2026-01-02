@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2025 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
+ * Copyright (c) 2014 - 2026 Micro Systems Marc Balmer, CH-5073 Gipf-Oberfrick.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -1138,6 +1138,34 @@ luazmq_getsockopt(lua_State *L)
 	return 1;
 }
 
+static int
+luazmq_poll(lua_State *L)
+{
+	void **sock;
+	int flags, rv;
+	zmq_pollitem_t item;
+
+	sock = luaL_checkudata(L, 1, ZMQ_SOCKET_METATABLE);
+	item.socket = *sock;
+	item.events = ZMQ_POLLIN;
+
+	rv =  zmq_poll(&item, 1, luaL_checkinteger(L, 2));
+	if (rv == -1) {
+		switch (errno) {
+		case ETERM:
+			return luaL_error(L, "zmq_poll: ETERM");
+			break;
+		case EFAULT:
+			return luaL_error(L, "zmq_poll: EFAULT");
+			break;
+		case EINTR:
+			return luaL_error(L, "zmq_poll: EINTR");
+			break;
+		}
+	}
+	lua_pushinteger(L, rv);
+	return 1;
+}
 
 static int
 luazmq_recv(lua_State *L)
@@ -1585,6 +1613,7 @@ luaopen_zmq(lua_State *L)
 		{ "close",		luazmq_close },
 		{ "connect",		luazmq_connect },
 		{ "getsockopt",		luazmq_getsockopt },
+		{ "poll",		luazmq_poll },
 		{ "recv",		luazmq_recv },
 		{ "send",		luazmq_send },
 		{ "sendConst",		luazmq_send_const },
@@ -1684,14 +1713,14 @@ luaopen_zmq(lua_State *L)
 	lua_pop(L, 1);
 
 	lua_pushliteral(L, "_COPYRIGHT");
-	lua_pushliteral(L, "Copyright (C) 2014 - 2025 by "
+	lua_pushliteral(L, "Copyright (C) 2014 - 2026 by "
 	    "micro systems marc balmer");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_DESCRIPTION");
 	lua_pushliteral(L, "0MQ for Lua");
 	lua_settable(L, -3);
 	lua_pushliteral(L, "_VERSION");
-	lua_pushliteral(L, "zmq 1.2.2");
+	lua_pushliteral(L, "zmq 1.2.4");
 	lua_settable(L, -3);
 	return 1;
 }
